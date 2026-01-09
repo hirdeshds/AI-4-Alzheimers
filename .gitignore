@@ -1,8 +1,7 @@
 # Ignore model file (very large)
 Backend/model/alzheimer_Model_final.h5
 
-# Ignore dataset folder (images, etc.)
-Backend/dataset/
+
 
 # Ignore OS files
 .DS_Store

@@ -1,0 +1,31 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Virtual environments
+venv/
+.env/
+
+# Jupyter / experiments
+*.ipynb
+
+# Datasets / raw files
+dataset/
+data/
+*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Large unnecessary files
+*.zip
+*.tar

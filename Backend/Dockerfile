@@ -2,9 +2,13 @@ FROM tensorflow/tensorflow:2.15.0
 
 WORKDIR /app
 
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir fastapi uvicorn pillow python-dotenv requests
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    pillow \
+    python-dotenv \
+    requests \
+    python-multipart
 
 COPY . .
 

@@ -1,16 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
-import tensorflow as tf
 from PIL import Image
+import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-import os
 
-# Safety: disable GPU (Railway CPU only)
-tf.config.set_visible_devices([], 'GPU')
-
+# FastAPI setup
 app = FastAPI(title="Alzheimer MRI Classification API")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,9 +15,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model/alzheimer_Model_final.h5"
+# TFLite model path
+MODEL_PATH = "model/alzheimer_Model_final.tflite"
 
-model = tf.keras.models.load_model(MODEL_PATH)
+# Load TFLite model
+interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 classes = [
     "Mild Impairment",
@@ -30,21 +31,20 @@ classes = [
     "Very Mild Impairment"
 ]
 
+# Optional MRI-like check
 def is_mri_like(image: Image.Image) -> bool:
     img = np.array(image.convert("RGB"))
     r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
-
     diff_rg = np.mean(np.abs(r - g))
     diff_rb = np.mean(np.abs(r - b))
     diff_gb = np.mean(np.abs(g - b))
-
     return diff_rg < 15 and diff_rb < 15 and diff_gb < 15
 
 def prepare_image(image):
     image = image.convert("RGB")
     image = image.resize((224, 224))
     img_array = np.expand_dims(np.array(image), axis=0)
-    return preprocess_input(img_array)
+    return preprocess_input(img_array).astype(np.float32)
 
 @app.get("/")
 def root():
@@ -64,10 +64,14 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid image")
 
     if not is_mri_like(image):
-        raise HTTPException(status_code=400, detail="Not a valid MRI")
+        raise HTTPException(status_code=200, detail="Not a valid MRI")
 
     img = prepare_image(image)
-    preds = model.predict(img)
+
+    # TFLite inference
+    interpreter.set_tensor(input_details[0]['index'], img)
+    interpreter.invoke()
+    preds = interpreter.get_tensor(output_details[0]['index'])
 
     idx = int(np.argmax(preds))
     confidence = float(np.max(preds)) * 100

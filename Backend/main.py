@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model/alzheimer_Model_final_new.h5"
+MODEL_PATH = "model/alzheimer_Model_final.h5"
 
 model = tf.keras.models.load_model(MODEL_PATH)
 

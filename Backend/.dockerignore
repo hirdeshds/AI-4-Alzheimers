@@ -36,11 +36,8 @@ venv/
 # Node / frontend (if any)
 node_modules/
 
-# Documentation
-README.md
 
-# Shell scripts (if not used in container)
-start.sh
+
 
 # Utilities / notebooks
 utils/

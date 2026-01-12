@@ -8,15 +8,17 @@ import { Brain, Loader2, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const signupSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -26,7 +28,13 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signup } = useAuth();
@@ -35,41 +43,42 @@ const Signup = () => {
     e.preventDefault();
     setErrors({});
 
-    const validation = signupSchema.safeParse({ name, email, password, confirmPassword });
+    const validation = signupSchema.safeParse({
+      name,
+      email,
+      password,
+      confirmPassword,
+    });
+
     if (!validation.success) {
-      const fieldErrors: { name?: string; email?: string; password?: string; confirmPassword?: string } = {};
+      const fieldErrors: typeof errors = {};
       validation.error.errors.forEach((err) => {
-        if (err.path[0] === "name") fieldErrors.name = err.message;
-        if (err.path[0] === "email") fieldErrors.email = err.message;
-        if (err.path[0] === "password") fieldErrors.password = err.message;
-        if (err.path[0] === "confirmPassword") fieldErrors.confirmPassword = err.message;
+        fieldErrors[err.path[0] as keyof typeof errors] = err.message;
       });
       setErrors(fieldErrors);
       return;
     }
 
-    setLoading(true);
-    
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    const success = signup(name, email, password);
-    
-    if (success) {
+    try {
+      setLoading(true);
+
+      await signup(name, email, password);
+
       toast({
         title: "Account created!",
         description: "You have successfully signed up.",
       });
+
       navigate("/dashboard");
-    } else {
+    } catch (error: any) {
       toast({
         title: "Signup Failed",
-        description: "An account with this email already exists.",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -86,7 +95,7 @@ const Signup = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-center text-foreground mb-2">
+          <h1 className="text-2xl font-bold text-center mb-2">
             Create Account
           </h1>
           <p className="text-muted-foreground text-center mb-8">
@@ -94,89 +103,82 @@ const Signup = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label>Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={`pl-10 ${errors.name ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Enter your full name"
                 />
               </div>
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label>Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="email"
                   type="email"
-                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Enter your email"
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label>Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`pl-10 pr-10 ${errors.password ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Enter your Password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>
 
+            {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label>Confirm Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`pl-10 pr-10 ${errors.confirmPassword ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Re-enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.confirmPassword && (
@@ -184,11 +186,7 @@ const Signup = () => {
               )}
             </div>
 
-            <Button
-              type="submit"
-              className="w-full gradient-primary hover:opacity-90 transition-opacity"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full gradient-primary" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

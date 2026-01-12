@@ -19,15 +19,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login } = useAuth();
-
-  const fillDemoCredentials = () => {
-    setEmail("hirdesh@medAI.com");
-    setPassword("test1234");
-    setErrors({});
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,35 +32,32 @@ const Login = () => {
     if (!validation.success) {
       const fieldErrors: { email?: string; password?: string } = {};
       validation.error.errors.forEach((err) => {
-        if (err.path[0] === "email") fieldErrors.email = err.message;
-        if (err.path[0] === "password") fieldErrors.password = err.message;
+        fieldErrors[err.path[0] as "email" | "password"] = err.message;
       });
       setErrors(fieldErrors);
       return;
     }
 
-    setLoading(true);
-    
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    const success = login(email, password);
-    
-    if (success) {
+    try {
+      setLoading(true);
+
+      await login(email, password);
+
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
+
       navigate("/dashboard");
-    } else {
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password.",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -82,7 +74,7 @@ const Login = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-center text-foreground mb-2">
+          <h1 className="text-2xl font-bold text-center mb-2">
             Welcome Back
           </h1>
           <p className="text-muted-foreground text-center mb-8">
@@ -90,56 +82,48 @@ const Login = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label >Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="email"
                   type="email"
-                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Enter your email"
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label>Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`pl-10 pr-10 ${errors.password ? "border-destructive" : ""}`}
                   disabled={loading}
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>
 
-            <Button
-              type="submit"
-              className="w-full gradient-primary hover:opacity-90 transition-opacity"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full gradient-primary" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -149,16 +133,6 @@ const Login = () => {
                 "Sign In"
               )}
             </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={fillDemoCredentials}
-              disabled={loading}
-            >
-              Use Demo Credentials
-            </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
@@ -166,10 +140,6 @@ const Login = () => {
             <Link to="/signup" className="text-primary hover:underline font-medium">
               Sign up
             </Link>
-          </p>
-
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            Demo: hirdesh@medAI.com / test1234
           </p>
         </div>
       </div>

@@ -16,9 +16,7 @@ const Dashboard = () => {
 
   const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
   const userEmail = user?.email || "No email";
-  const joinDate = user?.createdAt 
-    ? new Date(user.createdAt).toLocaleDateString() 
-    : "N/A";
+  const joinDate = "N/A";
 
   const apiEndpoint = "http://127.0.0.1:8000/predict";
   

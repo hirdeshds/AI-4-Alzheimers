@@ -120,6 +120,7 @@ uvicorn Backend/app:app --reload
 
 ---
 
-## 📄 License
+## License
+MIT ©  Mahek Bhatia, Hirdesh, Dhruv Srivastava
 
-This project is intended for **academic and educational purposes only**.
+
